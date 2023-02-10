@@ -1,11 +1,11 @@
 import { Handler } from 'aws-cdk-lib/aws-lambda'
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 
-type ShortPost = {
+type PostBase = {
     id: number
     title: string
     slug: string
-    category: string,
+    category: string
     tags: string[]
     imageUrl: string
     description: string
@@ -15,7 +15,7 @@ type ShortPost = {
 export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     console.log('[EVENT]', event)
 
-    var result: ShortPost[] = [{
+    var result: PostBase[] = [{
         id: 1,
         title: 'My first post',
         slug: 'my-first-post',
