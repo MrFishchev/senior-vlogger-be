@@ -7,7 +7,7 @@ services:
     ports:
       - 4566:4566
     environment:
-      - SERVICES=lambda,ssm,sns,s3
+      - SERVICES=lambda,ssm,sns,s3,dynamodb
       - DEBUG=0
       - DOCKER_HOST=unix:///var/run/docker.sock
       - LAMBDA_EXECUTOR=local
@@ -18,3 +18,4 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./localstack/create-resources.sh:/docker-entrypoint-initaws.d/create-resources.sh
+      - ./localstack/:/localstack/

@@ -1,10 +1,11 @@
 import { Handler } from 'aws-cdk-lib/aws-lambda'
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import { DynamoDBClient, ScanCommand} from '@aws-sdk/client-dynamodb'
-import { unmarshall } from '@aws-sdk/util-dynamodb'
+import { DynamoDBClient, PutItemCommand} from '@aws-sdk/client-dynamodb'
+import { marshall } from '@aws-sdk/util-dynamodb'
+import { uuid } from 'uuidv4'
 
-type PostBase = {
-    id: number
+type Post = {
+    id: string
     title: string
     slug: string
     category: string
@@ -12,10 +13,14 @@ type PostBase = {
     imageUrl: string
     description: string
     publishDate: Date
+    content: string
+    isSentToSubscribers: boolean
+    isScratch: boolean
   }
 
 export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     console.log('[EVENT]', event)
+    let postFromDb: Post | null = null
 
     const dynamoDb = new DynamoDBClient({
         region: 'eu-west-1',
@@ -23,20 +28,13 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
     })
 
     try {
-        const { Items } = await dynamoDb.send(new ScanCommand({
-            TableName: 'posts'
+        const postToSave: Post = JSON.parse(event.body!)
+        postToSave.id = uuid()
+        await dynamoDb.send(new PutItemCommand({
+            TableName: 'posts',
+            Item: marshall(postToSave)
         }))
-        const posts: PostBase[] = Items?.map(x=> unmarshall(x) as PostBase) ?? []
 
-        return {
-            statusCode: 200,
-            headers: {
-                "Access-Control-Allow-Headers" : "*",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-            },
-            body: JSON.stringify(posts)
-        }
     } catch (e) {
         return {
             statusCode: 500,
@@ -47,5 +45,15 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
             },
             body: JSON.stringify({ msg: e})
         }
+    }
+
+    return {
+        statusCode: 200,
+        headers: {
+            "Access-Control-Allow-Headers" : "*",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+        },
+        body: JSON.stringify({ msg: 'Post is created' })
     }
 }

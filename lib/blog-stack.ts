@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { BlogApi } from './blog-api';
-import { StorageApi } from './storage-api';
 import { BlogS3 } from './blog-s3';
 
 export class BlogStack extends cdk.Stack {
@@ -10,7 +9,6 @@ export class BlogStack extends cdk.Stack {
 
     const blogStorageS3 = new BlogS3(this, 'BlogStorageS3')
 
-    new BlogApi(this, 'BlogServiceApi')
-    new StorageApi(this, 'StorageServiceApi', { storageBucket: blogStorageS3.StorageBucket })
+    new BlogApi(this, 'BlogServiceApi', { storageBucket: blogStorageS3.StorageBucket })
   }
 }
