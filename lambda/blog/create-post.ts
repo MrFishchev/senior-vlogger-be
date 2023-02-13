@@ -2,10 +2,10 @@ import { Handler } from 'aws-cdk-lib/aws-lambda'
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { DynamoDBClient, PutItemCommand} from '@aws-sdk/client-dynamodb'
 import { marshall } from '@aws-sdk/util-dynamodb'
-import { uuid } from 'uuidv4'
+
+const TABLE_NAME = process.env.TABLE_NAME ?? ''
 
 type Post = {
-    id: string
     title: string
     slug: string
     category: string
@@ -18,42 +18,28 @@ type Post = {
     isScratch: boolean
   }
 
-export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    console.log('[EVENT]', event)
-    let postFromDb: Post | null = null
+const dynamoDb = new DynamoDBClient({
+    region: 'eu-west-1',
+    endpoint: 'http://localhost:4566'
+})
 
-    const dynamoDb = new DynamoDBClient({
-        region: 'eu-west-1',
-        endpoint: 'http://localhost:4566'
-    })
+export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    if (!event.body) {
+        return { statusCode: 400, body: 'Invalid request' }
+    }
+
+    const postToSave: Post = JSON.parse(event.body)
+    postToSave.slug = postToSave.title.replace(/[\W_]/g, '-').toLowerCase()
 
     try {
-        const postToSave: Post = JSON.parse(event.body!)
-        postToSave.id = uuid()
         await dynamoDb.send(new PutItemCommand({
-            TableName: 'posts',
+            TableName: TABLE_NAME,
             Item: marshall(postToSave)
         }))
 
-    } catch (e) {
-        return {
-            statusCode: 500,
-            headers: {
-                "Access-Control-Allow-Headers" : "*",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-            },
-            body: JSON.stringify({ msg: e})
-        }
+    } catch (err) {
+        return { statusCode: 500, body: err as string };
     }
 
-    return {
-        statusCode: 200,
-        headers: {
-            "Access-Control-Allow-Headers" : "*",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
-        },
-        body: JSON.stringify({ msg: 'Post is created' })
-    }
+    return { statusCode: 201, body: ''}
 }

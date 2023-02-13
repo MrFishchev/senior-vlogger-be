@@ -1,10 +1,10 @@
 {
     "TableName": "posts",
     "KeySchema": [
-      { "AttributeName": "id", "KeyType": "HASH" }
+      { "AttributeName": "slug", "KeyType": "HASH" }
     ],
     "AttributeDefinitions": [
-      { "AttributeName": "id", "AttributeType": "S" }
+      { "AttributeName": "slug", "AttributeType": "S" }
     ],
     "ProvisionedThroughput": {
       "ReadCapacityUnits": 5,
